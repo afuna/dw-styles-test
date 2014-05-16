@@ -1,0 +1,64 @@
+commit 42042af373f13cae9ca5e28966617bd3e69a2a4e
+Author: Afuna <fu@dreamwidth.org>
+Date:   Thu May 15 13:53:01 2014 -0700
+
+    Tweaks to enable hacking with s2 easily
+
+diff --git a/cgi-bin/LJ/S2.pm b/cgi-bin/LJ/S2.pm
+index 0c9cd3b..69e5c72 100644
+--- a/cgi-bin/LJ/S2.pm
++++ b/cgi-bin/LJ/S2.pm
+@@ -856,6 +856,7 @@ sub s2_context
+         LJ::S2::populate_system_props($ctx);
+         LJ::S2::alias_renamed_props( $ctx );
+         LJ::S2::alias_overriding_props( $ctx );
++        LJ::S2::override_props_with_get( $ctx ) if $LJ::IS_DEV_SERVER;
+         S2::set_output(sub {});  # printing suppressed
+         S2::set_output_safe(sub {});
+         eval { S2::run_code($ctx, "prop_init()"); };
+@@ -1320,6 +1321,15 @@ sub alias_overriding_props {
+     }
+ }
+ 
++sub override_props_with_get {
++    my $ctx = $_[0];
++
++    my $get = DW::Request->get->get_args;
++    $ctx->[S2::PROPS]->{layout_type} = $get->{layout_type} if $get->{layout_type};
++    $ctx->[S2::PROPS]->{module_time_show} = 0;
++    $ctx->[S2::PROPS]->{num_items_recent} = 10;
++}
++
+ sub convert_prop_val {
+     my ( $prop, $val ) = @_;
+     $prop ||= {};
+diff --git a/htdocs/customize/preview_redirect.bml b/htdocs/customize/preview_redirect.bml
+index 485810f..23619bc 100644
+--- a/htdocs/customize/preview_redirect.bml
++++ b/htdocs/customize/preview_redirect.bml
+@@ -25,12 +25,16 @@ body<=
+ 
+     my $themeid = $GET{themeid}+0;
+     my $layoutid = $GET{layoutid}+0;
++    my $layout = $GET{layout};
++    my $layout_type = $GET{layout_type};
+ 
+     my $theme;
+     if ($themeid) {
+         $theme = LJ::S2Theme->load_by_themeid($themeid, $u);
+     } elsif ($layoutid) {
+         $theme = LJ::S2Theme->load_custom_layoutid($layoutid, $u);
++    } elsif ($layout) {
++        $theme = LJ::S2Theme->load_default_of( $layout . "/layout" );
+     } else {
+         return $ML{'.error.id'};
+     }
+@@ -42,7 +46,7 @@ body<=
+     if ( $u->is_identity ) {
+         return BML::redirect( $u->openid_journal_base .  "/?s2id=$styleid" );
+     } else {
+-        return BML::redirect( $u->journal_base . "/?s2id=$styleid" );
++        return BML::redirect( $u->journal_base . "/?s2id=$styleid&layout_type=$layout_type" );
+     }
+ }
+ _code?>
