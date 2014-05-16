@@ -9,7 +9,7 @@ The basic idea is that you:
 
 Obviously once you make changes to the CSS you'll expect something to change! This is to make it easier to confirm you're not doing unexpected changes (especially if you're touching core2base, or working on multiple styles at once).
 
-Requires (needle)[http://needle.readthedocs.org/en/latest/]. That will also install nosetests and selenium.
+Requires [needle](http://needle.readthedocs.org/en/latest/). That will also install nosetests and selenium.
 
 Make sure to check out the bottom for instructions on using `perceptualdiff`. The visual diff of screenshots is nice.
 
